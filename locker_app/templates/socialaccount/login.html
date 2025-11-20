@@ -1,0 +1,32 @@
+{% extends "locker_app/base.html" %}
+{% load i18n %}
+{% load static %}
+
+{% block title %}{% trans "Sign In" %}{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'locker_app/css/auth.css' %}">
+{% endblock %}
+
+{% block content %}
+<div class="auth-container">
+    <div class="auth-card">
+        <h2 class="auth-title">{% trans "Sign In via Google" %}</h2>
+        <p class="auth-subtitle">{% trans "Confirm your authentication" %}</p>
+
+        <div style="text-align: center; margin-bottom: 2rem;">
+            <p>{% blocktrans with provider.name as provider %}You are about to sign in using your third-party account
+                from {{ provider }}.{% endblocktrans %}</p>
+        </div>
+
+        <form method="post">
+            {% csrf_token %}
+            <button type="submit" class="btn btn-primary btn-block">{% trans "Continue" %}</button>
+        </form>
+
+        <div class="auth-footer">
+            <a href="{% url 'login' %}">{% trans "Cancel and return to login" %}</a>
+        </div>
+    </div>
+</div>
+{% endblock %}

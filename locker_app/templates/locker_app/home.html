@@ -1,0 +1,167 @@
+{% extends 'locker_app/base.html' %}
+{% load static %}
+
+{% block title %}Secure Your Files - File Locker{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'locker_app/css/home.css' %}">
+{% endblock %}
+
+{% block content %}
+<div class="hero-section">
+    <h1 class="hero-title">Secure File Encryption</h1>
+    <p class="hero-text">Protect your sensitive data with military-grade encryption. Upload, encrypt, and download
+        securely.</p>
+</div>
+
+<div class="locker-grid">
+    {% if user.is_authenticated %}
+    <div class="glass-panel locker-card">
+        <form method="post" enctype="multipart/form-data" id="lockerForm">
+            {% csrf_token %}
+
+            {% if form.non_field_errors %}
+            <div class="alert alert-error">
+                {{ form.non_field_errors }}
+            </div>
+            {% endif %}
+
+            <!-- File Upload Zone -->
+            <div class="form-group">
+                <label for="{{ form.file.id_for_label }}" class="file-upload-zone" id="dropZone">
+                    <div class="upload-icon">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none"
+                            stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                            <polyline points="17 8 12 3 7 8"></polyline>
+                            <line x1="12" y1="3" x2="12" y2="15"></line>
+                        </svg>
+                    </div>
+                    <div class="upload-text">Click to upload or drag and drop</div>
+                    <div class="upload-hint">Supports multiple files</div>
+                    <div id="fileList" style="margin-top: 1rem; font-size: 0.9rem; color: var(--primary-color);"></div>
+                </label>
+                {{ form.file }}
+                {% if form.file.errors %}
+                <div class="alert alert-error" style="margin-top: 0.5rem;">{{ form.file.errors.0 }}</div>
+                {% endif %}
+            </div>
+
+            <div class="options-grid">
+                <!-- Algorithm Selection -->
+                <div class="option-group">
+                    <label class="option-label">Encryption Algorithm</label>
+                    {{ form.algorithm }}
+                </div>
+
+                <!-- Action Selection -->
+                <div class="option-group">
+                    <label class="option-label">Action</label>
+                    <div class="radio-group">
+                        {% for radio in form.action %}
+                        <div class="radio-option">
+                            {{ radio.tag }}
+                            <label for="{{ radio.id_for_label }}">{{ radio.choice_label }}</label>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+
+            <!-- Key Input -->
+            <div class="form-group" style="margin-top: 1.5rem;">
+                <label for="{{ form.key.id_for_label }}" class="form-label">Secret Key</label>
+                {{ form.key }}
+                <div style="font-size: 0.8rem; color: var(--text-muted); margin-top: 0.25rem;">Required for XOR
+                    encryption</div>
+                {% if form.key.errors %}
+                <div class="alert alert-error" style="margin-top: 0.5rem;">{{ form.key.errors.0 }}</div>
+                {% endif %}
+            </div>
+
+            <button type="submit" class="btn btn-primary action-btn">Process Files</button>
+        </form>
+    </div>
+    {% else %}
+    <div class="glass-panel locker-card" style="text-align: center; padding: 3rem 2rem;">
+        <div style="margin-bottom: 2rem;">
+            <svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 24 24" fill="none"
+                stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"
+                style="color: var(--primary-color); margin: 0 auto;">
+                <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
+                <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
+            </svg>
+        </div>
+        <h2 style="font-size: 1.5rem; margin-bottom: 1rem; color: var(--text-color);">Secure Your Files</h2>
+        <p
+            style="color: var(--text-muted); margin-bottom: 2rem; max-width: 400px; margin-left: auto; margin-right: auto;">
+            Please sign in or create an account to start encrypting and decrypting your files with military-grade
+            security.
+        </p>
+        <div style="display: flex; gap: 1rem; justify-content: center; flex-wrap: wrap;">
+            <a href="{% url 'login' %}" class="btn btn-primary" style="padding: 0.75rem 2rem;">Sign In</a>
+            <a href="{% url 'signup' %}" class="btn btn-outline" style="padding: 0.75rem 2rem;">Create Account</a>
+        </div>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        const fileInput = document.getElementById('{{ form.file.id_for_label }}');
+        const dropZone = document.getElementById('dropZone');
+        const fileList = document.getElementById('fileList');
+
+        // Handle file selection
+        fileInput.addEventListener('change', function (e) {
+            updateFileList(this.files);
+        });
+
+        // Drag and drop effects
+        ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+            dropZone.addEventListener(eventName, preventDefaults, false);
+        });
+
+        function preventDefaults(e) {
+            e.preventDefault();
+            e.stopPropagation();
+        }
+
+        ['dragenter', 'dragover'].forEach(eventName => {
+            dropZone.addEventListener(eventName, highlight, false);
+        });
+
+        ['dragleave', 'drop'].forEach(eventName => {
+            dropZone.addEventListener(eventName, unhighlight, false);
+        });
+
+        function highlight(e) {
+            dropZone.classList.add('drag-over');
+        }
+
+        function unhighlight(e) {
+            dropZone.classList.remove('drag-over');
+        }
+
+        dropZone.addEventListener('drop', function (e) {
+            const dt = e.dataTransfer;
+            const files = dt.files;
+            fileInput.files = files;
+            updateFileList(files);
+        });
+
+        function updateFileList(files) {
+            if (files.length > 0) {
+                const names = Array.from(files).map(f => f.name).join(', ');
+                fileList.textContent = `Selected: ${names}`;
+                document.querySelector('.upload-text').textContent = `${files.length} file(s) selected`;
+            } else {
+                fileList.textContent = '';
+                document.querySelector('.upload-text').textContent = 'Click to upload or drag and drop';
+            }
+        }
+    });
+</script>
+{% endblock %}
