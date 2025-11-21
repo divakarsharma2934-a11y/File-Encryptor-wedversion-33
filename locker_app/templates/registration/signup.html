@@ -1,6 +1,6 @@
 {% extends 'locker_app/base.html' %}
 {% load static %}
-{% load socialaccount %}
+<!-- {% load socialaccount %} -->
 
 {% block title %}Sign Up - File Locker{% endblock %}
 
@@ -57,7 +57,7 @@
             <span>OR</span>
         </div>
 
-        <div class="social-login">
+        <!-- <div class="social-login">
             <a href="{% provider_login_url 'google' %}" class="btn btn-google btn-block">
                 <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24">
                     <path
@@ -65,7 +65,7 @@
                 </svg>
                 Continue with Google
             </a>
-        </div>
+        </div> -->
 
         <div class="auth-footer">
             Already have an account? <a href="{% url 'login' %}">Sign in</a>
