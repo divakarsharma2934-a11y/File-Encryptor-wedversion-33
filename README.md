@@ -1,36 +1,98 @@
-# File Locker Django Project
+# File Locker Project
 
-This is a Django web application that integrates `locker.py` for file encryption and decryption.
+A secure web application for encrypting and decrypting files using various algorithms. This project allows users to upload files, apply encryption (XOR, Base64, or both), and download the secured result. It also features user authentication to track file processing history.
 
-## Features
-- Encrypt files using XOR, Base64, or XOR+Base64.
-- Decrypt files.
-- Simple web interface.
+## 🚀 Tech Stack
 
-## Setup
+*   **Backend Framework:** [Django](https://www.djangoproject.com/) (Python)
+*   **Database:** SQLite (Default Django setup)
+*   **Frontend:** HTML5, CSS3, Django Templates
+*   **Server/Deployment:** Gunicorn, Whitenoise
+*   **Encryption Logic:** Custom Python implementation (`locker.py`) using `base64` and `hashlib`.
 
-1. **Install Dependencies:**
-   Ensure you have Django installed.
-   ```bash
-   pip install django
-   ```
+## 📂 Project Structure
 
-2. **Run Migrations:**
-   ```bash
-   python manage.py migrate
-   ```
+Here is an overview of the key files and directories in the project:
 
-3. **Run the Server:**
-   ```bash
-   python manage.py runserver
-   ```
+### Root Directory
+*   **`manage.py`**: Django's command-line utility for administrative tasks (running the server, migrations, etc.).
+*   **`requirements.txt`**: Lists the Python dependencies required to run the project.
+*   **`db.sqlite3`**: The SQLite database file storing user data and file history.
+*   **`Procfile`**: Configuration for deployment (e.g., on Heroku or Render).
+*   **`render-build.sh`**: Build script for deployment on Render.
 
-4. **Access the App:**
-   Open your browser and go to `http://127.0.0.1:8000/`.
+### `locker_app/` (Main Application)
+This directory contains the core logic of the application.
 
-## Usage
-1. Select a file to upload.
-2. Enter an encryption key (required for XOR modes).
-3. Select the algorithm.
-4. Choose Encrypt or Decrypt.
-5. Click "Process File" to download the result.
+*   **`views.py`**: Handles the request/response logic.
+    *   `home`: Manages file upload, encryption/decryption processing, and file download.
+    *   `signup`, `profile`, `change_username`: Manage user authentication and account settings.
+*   **`models.py`**: Defines the database schema.
+    *   `FileHistory`: Tracks user activities (encrypt/decrypt actions, filenames, timestamps).
+*   **`locker.py`**: The core utility for file security.
+    *   Implements `xor_encrypt`, `xor_decrypt`, `b64_encrypt`, `b64_decrypt`.
+    *   Handles key hashing (SHA-256) and file signatures (`LOCKER_V1`) to ensure data integrity.
+*   **`forms.py`**: Django forms for validating user input.
+    *   `LockerForm`: Handles file selection, key input, and algorithm choice.
+    *   `UsernameChangeForm`: For updating user profiles.
+*   **`urls.py`**: Defines the URL routing for the app.
+*   **`templates/locker_app/`**: Contains HTML files for the UI (`home.html`, `profile.html`, `base.html`, etc.).
+*   **`static/locker_app/`**: Contains static assets like CSS files (`home.css`, `auth.css`) for styling.
+
+### `file_locker_project/` (Project Configuration)
+*   **`settings.py`**: Global settings for the Django project (database config, installed apps, middleware).
+*   **`urls.py`**: The root URL configuration that includes `locker_app` URLs.
+*   **`wsgi.py`**: WSGI config for web servers.
+
+## 🔑 Key Features
+
+1.  **File Encryption & Decryption**:
+    *   **Algorithms**: XOR, Base64, and XOR+Base64.
+    *   **Security**: Uses a user-provided key, hashed with SHA-256. Adds a signature to verify integrity upon decryption.
+    *   **Batch Processing**: Multiple files uploaded for encryption are automatically zipped.
+
+2.  **User Authentication**:
+    *   Sign up and Login functionality.
+    *   Profile page to view the history of encrypted/decrypted files.
+    *   Ability to change username and password.
+
+## 🛠️ Setup & Installation
+
+1.  **Clone the repository** (if applicable) or navigate to the project folder.
+
+2.  **Create a Virtual Environment** (Recommended):
+    ```bash
+    python -m venv venv
+    # Windows
+    venv\Scripts\activate
+    # macOS/Linux
+    source venv/bin/activate
+    ```
+
+3.  **Install Dependencies**:
+    ```bash
+    pip install -r requirements.txt
+    ```
+
+4.  **Apply Migrations**:
+    ```bash
+    python manage.py migrate
+    ```
+
+5.  **Run the Development Server**:
+    ```bash
+    python manage.py runserver
+    ```
+    Access the app at `http://127.0.0.1:8000/`.
+
+## 📝 Usage
+
+1.  **Home Page**:
+    *   Select one or more files.
+    *   Enter a secret key (required for XOR).
+    *   Choose an algorithm (XOR, Base64, or Both).
+    *   Select "Encrypt" or "Decrypt" and submit.
+    *   The processed file will be downloaded automatically.
+
+2.  **Profile**:
+    *   Log in to view a history of your file operations.
