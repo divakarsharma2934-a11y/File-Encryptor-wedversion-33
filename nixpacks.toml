@@ -8,4 +8,4 @@ cmds = ["pip install -r requirements.txt"]
 cmds = ["python manage.py collectstatic --no-input"]
 
 [start]
-cmd = "gunicorn file_locker_project.wsgi --log-file -"
+cmd = "gunicorn file_locker_project.wsgi --log-file - --bind 0.0.0.0:$PORT"
