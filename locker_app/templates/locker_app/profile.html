@@ -17,7 +17,14 @@
             <div class="profile-info">
                 <h2>{{ user.username }}</h2>
                 <div class="profile-email">{{ user.email }}</div>
-
+                <div style="margin-top: 1rem; display: flex; gap: 0.5rem;">
+                    <a href="{% url 'change_username' %}"
+                        style="padding: 0.5rem 1rem; background: rgba(255, 255, 255, 0.1); color: white; text-decoration: none; border-radius: 0.5rem; font-size: 0.875rem; transition: background 0.2s;">Change
+                        Username</a>
+                    <a href="{% url 'change_password' %}"
+                        style="padding: 0.5rem 1rem; background: rgba(255, 255, 255, 0.1); color: white; text-decoration: none; border-radius: 0.5rem; font-size: 0.875rem; transition: background 0.2s;">Change
+                        Password</a>
+                </div>
             </div>
         </div>
 

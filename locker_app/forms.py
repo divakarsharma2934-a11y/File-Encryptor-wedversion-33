@@ -68,3 +68,13 @@ class LockerForm(forms.Form):
             self.add_error('key', 'Key is required for XOR encryption/decryption.')
         
         return cleaned_data
+
+from django.contrib.auth.models import User
+
+class UsernameChangeForm(forms.ModelForm):
+    class Meta:
+        model = User
+        fields = ['username']
+        widgets = {
+            'username': forms.TextInput(attrs={'class': 'form-control'})
+        }

@@ -1,5 +1,6 @@
 from django.shortcuts import render, redirect
 from django.http import HttpResponse
+from . import forms
 from .forms import LockerForm
 from .models import FileHistory
 from . import locker
@@ -88,3 +89,26 @@ def home(request):
         form = LockerForm()
 
     return render(request, 'locker_app/home.html', {'form': form})
+
+@login_required
+def change_username(request):
+    if request.method == 'POST':
+        form = forms.UsernameChangeForm(request.POST, instance=request.user)
+        if form.is_valid():
+            form.save()
+            messages.success(request, 'Username updated successfully!')
+            return redirect('profile')
+    else:
+        form = forms.UsernameChangeForm(instance=request.user)
+    return render(request, 'locker_app/change_username.html', {'form': form})
+
+from django.contrib.auth.views import PasswordChangeView
+from django.urls import reverse_lazy
+
+class CustomPasswordChangeView(PasswordChangeView):
+    template_name = 'locker_app/change_password.html'
+    success_url = reverse_lazy('profile')
+    
+    def form_valid(self, form):
+        messages.success(self.request, 'Password updated successfully!')
+        return super().form_valid(form)
