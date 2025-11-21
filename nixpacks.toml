@@ -1,0 +1,11 @@
+[phases.setup]
+nixPkgs = ["python3"]
+
+[phases.install]
+cmds = ["pip install -r requirements.txt"]
+
+[phases.build]
+cmds = ["python manage.py collectstatic --no-input"]
+
+[start]
+cmd = "gunicorn file_locker_project.wsgi --log-file -"
