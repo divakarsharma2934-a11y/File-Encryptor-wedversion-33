@@ -81,26 +81,53 @@ def b64_decrypt(data):
         raise ValueError(f"Base64 decoding failed: {e}")
 
 
+import hashlib
+
+SIGNATURE = b"LOCKER_V1"
+
+
+def get_key_hash(key):
+    "Hash the key using SHA-256 to ensure unique keys for similar passwords"
+    return hashlib.sha256(key).digest()
+
+
 def encrypt_data(data, key, algo):
+    # Hash the key to prevent "1111" == "11" issues
+    hashed_key = get_key_hash(key)
+    
+    # Prepend signature for verification
+    data_to_encrypt = SIGNATURE + data
+    
     if algo == "xor":
-        return xor_encrypt(data, key)
+        return xor_encrypt(data_to_encrypt, hashed_key)
     elif algo == "base64":
-        return b64_encrypt(data)
+        # For base64, we just encode the signed data
+        return b64_encrypt(data_to_encrypt)
     elif algo == "xor+base64":
-        return b64_encrypt(xor_encrypt(data, key))
+        return b64_encrypt(xor_encrypt(data_to_encrypt, hashed_key))
     else:
         raise ValueError(f"Invalid algorithm: {algo}")
 
 
 def decrypt_data(data, key, algo):
+    hashed_key = get_key_hash(key)
+    
+    decrypted = None
     if algo == "xor":
-        return xor_decrypt(data, key)
+        decrypted = xor_decrypt(data, hashed_key)
     elif algo == "base64":
-        return b64_decrypt(data)
+        decrypted = b64_decrypt(data)
     elif algo == "xor+base64":
-        return xor_decrypt(b64_decrypt(data), key)
+        decrypted = xor_decrypt(b64_decrypt(data), hashed_key)
     else:
         raise ValueError(f"Invalid algorithm: {algo}")
+        
+    # Verify signature
+    if not decrypted.startswith(SIGNATURE):
+        raise ValueError("Invalid password or corrupted file")
+        
+    # Return data without signature
+    return decrypted[len(SIGNATURE):]
 
 
 def validate_args(args):

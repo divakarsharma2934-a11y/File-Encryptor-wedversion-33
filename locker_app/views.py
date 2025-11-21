@@ -66,18 +66,22 @@ def home(request):
                     # The result should be a zip file if it was encrypted by us
                     filename = "unlocked_files.zip"
                 
-                # Save to history
-                file_names = ', '.join([f.name for f in uploaded_files]) if action == 'encrypt' else uploaded_files[0].name
-                FileHistory.objects.create(
-                    user=request.user,
-                    action=action,
-                    filename=file_names[:255]  # Truncate if too long
-                )
+                # Save to history only if user is authenticated
+                if request.user.is_authenticated:
+                    file_names = ', '.join([f.name for f in uploaded_files]) if action == 'encrypt' else uploaded_files[0].name
+                    FileHistory.objects.create(
+                        user=request.user,
+                        action=action,
+                        filename=file_names[:255]  # Truncate if too long
+                    )
+
                 
                 response = HttpResponse(result, content_type='application/octet-stream')
                 response['Content-Disposition'] = f'attachment; filename="{filename}"'
                 return response
 
+            except ValueError as e:
+                messages.error(request, f"Decryption failed: {str(e)}")
             except Exception as e:
                 messages.error(request, f"Processing failed: {str(e)}")
     else:
