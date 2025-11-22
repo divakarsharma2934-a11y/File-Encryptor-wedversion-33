@@ -10,6 +10,21 @@ A secure web application for encrypting and decrypting files using various algor
 *   **Server/Deployment:** Gunicorn, Whitenoise
 *   **Encryption Logic:** Custom Python implementation (`locker.py`) using `base64` and `hashlib`.
 
+## 📦 Modules Used
+
+Here is a detailed list of the key modules and libraries used in this project:
+
+*   **[Django](https://www.djangoproject.com/)**: High-level Python web framework used for the backend logic, routing, and ORM.
+*   **[Gunicorn](https://gunicorn.org/)**: Python WSGI HTTP Server for UNIX, used to serve the Django application in production.
+*   **[Whitenoise](https://whitenoise.readthedocs.io/)**: Radically simplified static file serving for Python web apps, allowing the app to serve its own static files.
+*   **hashlib**: Standard Python library used for hashing the encryption keys (SHA-256) to ensure security.
+*   **base64**: Standard Python library used for encoding and decoding binary data to ASCII characters for the Base64 encryption algorithm.
+*   **argparse**: Standard Python library used for parsing command-line arguments in the `locker.py` utility.
+*   **os**: Standard Python library used for interacting with the operating system, such as file path manipulations.
+*   **sys**: Standard Python library used for system-specific parameters and functions.
+*   **io**: Standard Python library used for working with streams (e.g., in-memory ZIP file creation).
+*   **zipfile**: Standard Python library used for creating and reading ZIP archives.
+
 ## 📂 Project Structure
 
 Here is an overview of the key files and directories in the project:
