@@ -9,6 +9,8 @@ A secure web application for encrypting and decrypting files using various algor
 *   **Frontend:** HTML5, CSS3, Django Templates
 *   **Server/Deployment:** Gunicorn, Whitenoise
 *   **Encryption Logic:** Custom Python implementation (`locker.py`) using `base64` and `hashlib`.
+*   Deployment Setup:
+    The project is deployed on Railway using Gunicorn as the WSGI server and WhiteNoise for serving static files in production.
 
 ## 📂 Project Structure
 
