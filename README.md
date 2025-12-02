@@ -51,6 +51,7 @@ This directory contains the core logic of the application.
     *   `LockerForm`: Handles file selection, key input, and algorithm choice.
     *   `UsernameChangeForm`: For updating user profiles.
 *   **`urls.py`**: Defines the URL routing for the app.
+*   **`tests.py`**: Contains unit tests to verify the application's functionality (e.g., testing file uploads and encryption flows). **Note:** Deleting this file will not break the application, but you will lose the ability to run automated tests.
 *   **`templates/locker_app/`**: Contains HTML files for the UI (`home.html`, `profile.html`, `base.html`, etc.).
 *   **`static/locker_app/`**: Contains static assets like CSS files (`home.css`, `auth.css`) for styling.
 
