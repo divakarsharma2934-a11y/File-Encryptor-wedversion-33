@@ -63,6 +63,7 @@ class LockerForm(forms.Form):
         widget=MultipleFileInput(attrs={'class': 'form-control', 'multiple': True, 'webkitdirectory': True, 'directory': True, 'id': 'id_folder'}),
         required=False
     )
+    folder_name = forms.CharField(widget=forms.HiddenInput(attrs={'id': 'id_folder_name'}), required=False)
     key = forms.CharField(
         max_length=255, 
         label='Encryption Key', 

@@ -39,17 +39,21 @@
                     </div>
                     <div class="upload-text">Click to upload files or drag and drop</div>
                     <div class="upload-hint">
-                        <a href="#" id="uploadFolderLink"
-                            style="color: var(--primary-color); text-decoration: none; border-bottom: 1px dashed var(--primary-color);">Click
+                        <a href="#" id="folderUploadLink"
+                            style="color: var(--primary-color); text-decoration: underline; font-size: 0.9rem;">Click
                             here to upload a folder</a>
+                        <br>
+                        Drag and drop files here or click to select
                     </div>
                     <div id="fileList" style="margin-top: 1rem; font-size: 0.9rem; color: var(--primary-color);"></div>
-                    <button type="button" id="clearFilesBtn"
-                        style="display: none; margin-top: 0.5rem; background: none; border: none; color: #ff4d4d; cursor: pointer; font-size: 0.85rem; text-decoration: underline;">Clear
-                        Selection</button>
+                    <button type="button" id="clearFilesBtn" class="btn btn-outline"
+                        style="display: none; margin-top: 1rem; border-color: #ef4444; color: #ef4444;">
+                        Clear Selection
+                    </button>
                 </div>
                 {{ form.file }}
                 {{ form.folder }}
+                {{ form.folder_name }}
                 <style>
                     #id_folder {
                         display: none;
@@ -57,15 +61,27 @@
                 </style>
                 <script>
                     document.getElementById('dropZone').addEventListener('click', function (e) {
-                        if (e.target.id !== 'uploadFolderLink' && e.target.id !== 'clearFilesBtn') {
+                        if (e.target.id !== 'clearFilesBtn' && e.target.id !== 'folderUploadLink') {
                             document.getElementById('id_file').click();
                         }
                     });
 
-                    document.getElementById('uploadFolderLink').addEventListener('click', function (e) {
+                    document.getElementById('folderUploadLink').addEventListener('click', function (e) {
                         e.preventDefault();
                         e.stopPropagation();
                         document.getElementById('id_folder').click();
+                    });
+
+                    document.getElementById('id_folder').addEventListener('change', function (e) {
+                        if (this.files.length > 0) {
+                            // Extract folder name from the first file's relative path
+                            // webkitRelativePath format: "FolderName/FileName.ext"
+                            const relativePath = this.files[0].webkitRelativePath;
+                            if (relativePath) {
+                                const folderName = relativePath.split('/')[0];
+                                document.getElementById('id_folder_name').value = folderName;
+                            }
+                        }
                     });
                 </script>
                 {% if form.file.errors %}

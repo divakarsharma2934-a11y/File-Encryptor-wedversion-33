@@ -81,11 +81,18 @@ def home(request):
                     
                     # Save history (approximate size or just log it)
                     if request.user.is_authenticated:
-                        file_names = ', '.join([f.name for f in uploaded_files])
+                        folder_name = form.cleaned_data.get('folder_name')
+                        if folder_name:
+                            filename_display = f"Folder: {folder_name} ({len(uploaded_files)} files)"
+                        elif len(uploaded_files) > 1:
+                            filename_display = f"Batch Upload ({len(uploaded_files)} files)"
+                        else:
+                            filename_display = uploaded_files[0].name
+
                         FileHistory.objects.create(
                             user=request.user,
                             action=action,
-                            filename=file_names[:255]
+                            filename=filename_display[:255]
                         )
 
                     response = StreamingHttpResponse(
