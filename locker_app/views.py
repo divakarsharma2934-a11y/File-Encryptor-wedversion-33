@@ -58,7 +58,7 @@ def home(request):
                     # We'll use a generator to close it.
                     
                     tmp_file = tempfile.SpooledTemporaryFile(max_size=10*1024*1024, mode='w+b')
-                    with zipfile.ZipFile(tmp_file, 'w', zipfile.ZIP_DEFLATED) as zip_file:
+                    with zipfile.ZipFile(tmp_file, 'w', zipfile.ZIP_STORED) as zip_file:
                         for f in uploaded_files:
                             if f.multiple_chunks():
                                 with zip_file.open(f.name, 'w') as dest:
@@ -132,6 +132,9 @@ def home(request):
                 messages.error(request, f"Decryption failed: {str(e)}")
             except Exception as e:
                 messages.error(request, f"Processing failed: {str(e)}")
+        else:
+            # DEBUG: Add error to see what was received
+            form.add_error(None, f"DEBUG: Files received: {list(request.FILES.keys())}")
     else:
         form = LockerForm()
 

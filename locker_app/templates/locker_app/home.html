@@ -173,6 +173,15 @@
         const dropZone = document.getElementById('dropZone');
         const fileList = document.getElementById('fileList');
         const clearFilesBtn = document.getElementById('clearFilesBtn');
+        const lockerForm = document.getElementById('lockerForm');
+
+        if (lockerForm) {
+            lockerForm.addEventListener('submit', function (e) {
+                const fileCount = fileInput ? fileInput.files.length : 0;
+                const folderCount = folderInput ? folderInput.files.length : 0;
+                // alert(`DEBUG: Submitting form. Files: ${fileCount}, Folder files: ${folderCount}`);
+            });
+        }
 
         function handleFiles(files) {
             updateFileList(files);

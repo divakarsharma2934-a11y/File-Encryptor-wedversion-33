@@ -17,6 +17,11 @@ class MultipleFileInput(forms.FileInput):
     """
     allow_multiple_selected = True
 
+    def value_from_datadict(self, data, files, name):
+        if hasattr(files, 'getlist'):
+            return files.getlist(name)
+        return files.get(name)
+
 
 class MultipleFileField(forms.FileField):
     """
@@ -91,6 +96,10 @@ class LockerForm(forms.Form):
         key = cleaned_data.get("key")
         file = cleaned_data.get("file")
         folder = cleaned_data.get("folder")
+
+        print(f"DEBUG: file field data: {file}")
+        print(f"DEBUG: folder field data: {folder}")
+        print(f"DEBUG: cleaned_data keys: {cleaned_data.keys()}")
 
         if not file and not folder:
             raise forms.ValidationError("Please select at least one file or folder.")
