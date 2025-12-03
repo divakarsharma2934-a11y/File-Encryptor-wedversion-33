@@ -26,6 +26,19 @@
             </div>
             {% endif %}
 
+            <div class="instructions-panel"
+                style="background: rgba(255, 255, 255, 0.05); padding: 1rem; border-radius: 8px; margin-bottom: 1.5rem; font-size: 0.9rem; border: 1px solid rgba(255, 255, 255, 0.1);">
+                <h3 style="margin-top: 0; font-size: 1rem; color: var(--primary-color); margin-bottom: 0.5rem;">How to
+                    Upload</h3>
+                <ul style="margin: 0; padding-left: 1.2rem; color: var(--text-muted);">
+                    <li style="margin-bottom: 0.25rem;"><strong>Single/Multiple Files:</strong> Drag & drop into the box
+                        below or click to select.</li>
+                    <li style="margin-bottom: 0.25rem;"><strong>Entire Folder:</strong> Click the "upload a folder" link
+                        inside the box.</li>
+                    <li><strong>Encryption Key:</strong> Remember your key! You cannot decrypt files without it.</li>
+                </ul>
+            </div>
+
             <!-- File Upload Zone -->
             <div class="form-group">
                 <div class="file-upload-zone" id="dropZone">
@@ -201,6 +214,8 @@
         }
 
         // Drag and drop effects
+        let dragCounter = 0;
+
         ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
             dropZone.addEventListener(eventName, preventDefaults, false);
         });
@@ -210,23 +225,23 @@
             e.stopPropagation();
         }
 
-        ['dragenter', 'dragover'].forEach(eventName => {
-            dropZone.addEventListener(eventName, highlight, false);
-        });
-
-        ['dragleave', 'drop'].forEach(eventName => {
-            dropZone.addEventListener(eventName, unhighlight, false);
-        });
-
-        function highlight(e) {
+        dropZone.addEventListener('dragenter', function (e) {
+            dragCounter++;
             dropZone.classList.add('drag-over');
-        }
+        });
 
-        function unhighlight(e) {
-            dropZone.classList.remove('drag-over');
-        }
+        dropZone.addEventListener('dragleave', function (e) {
+            dragCounter--;
+            if (dragCounter <= 0) {
+                dragCounter = 0;
+                dropZone.classList.remove('drag-over');
+            }
+        });
 
         dropZone.addEventListener('drop', function (e) {
+            dragCounter = 0;
+            dropZone.classList.remove('drag-over');
+
             const dt = e.dataTransfer;
             const files = dt.files;
 
