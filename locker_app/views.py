@@ -1,16 +1,21 @@
 from django.shortcuts import render, redirect
-from django.http import HttpResponse
+from django.shortcuts import render, redirect
+from django.http import HttpResponse, StreamingHttpResponse
 from . import forms
 from .forms import LockerForm
 from .models import FileHistory
 from . import locker
-import io
 import zipfile
+import tempfile
+import os
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.forms import UserCreationForm
 from django.contrib import messages
 
 def signup(request):
+    """
+    Handle user registration.
+    """
     if request.method == 'POST':
         form = UserCreationForm(request.POST)
         if form.is_valid():
@@ -23,15 +28,21 @@ def signup(request):
 
 @login_required
 def profile(request):
+    """
+    Display the user's profile and file operation history.
+    """
     history = FileHistory.objects.filter(user=request.user)[:20]
     return render(request, 'locker_app/profile.html', {'history': history})
 
 def home(request):
+    """
+    Handle the home page view, including file upload, encryption, and decryption.
+    """
     if request.method == 'POST':
         print(f"FILES received: {request.FILES.keys()}") # Debugging
         form = LockerForm(request.POST, request.FILES)
         if form.is_valid():
-            uploaded_files = request.FILES.getlist('file')
+            uploaded_files = request.FILES.getlist('file') + request.FILES.getlist('folder')
             key = form.cleaned_data['key']
             algo = form.cleaned_data['algorithm']
             action = form.cleaned_data['action']
@@ -40,18 +51,49 @@ def home(request):
             
             try:
                 if action == 'encrypt':
-                    # Create a ZIP file in memory containing all uploaded files
-                    buffer = io.BytesIO()
-                    with zipfile.ZipFile(buffer, 'w', zipfile.ZIP_DEFLATED) as zip_file:
+                    # Create a ZIP file using a temporary file to save memory
+                    # SpooledTemporaryFile will keep data in memory until it exceeds max_size (e.g., 10MB), then spill to disk
+                    # We use a regular TemporaryFile here because SpooledTemporaryFile might be tricky with streaming if it rolls over?
+                    # Actually Spooled is fine, but we need to manage the lifecycle.
+                    # We'll use a generator to close it.
+                    
+                    tmp_file = tempfile.SpooledTemporaryFile(max_size=10*1024*1024, mode='w+b')
+                    with zipfile.ZipFile(tmp_file, 'w', zipfile.ZIP_DEFLATED) as zip_file:
                         for f in uploaded_files:
-                            zip_file.writestr(f.name, f.read())
+                            if f.multiple_chunks():
+                                with zip_file.open(f.name, 'w') as dest:
+                                    for chunk in f.chunks():
+                                        dest.write(chunk)
+                            else:
+                                zip_file.writestr(f.name, f.read())
                     
-                    # Get the ZIP data
-                    file_data = buffer.getvalue()
+                    # Reset file pointer
+                    tmp_file.seek(0)
                     
-                    # Encrypt the ZIP data
-                    result = locker.encrypt_data(file_data, key_bytes, algo)
+                    # Generator to stream response and close file
+                    def stream_response(file_obj, key, algo):
+                        try:
+                            yield from locker.encrypt_stream(file_obj, key, algo)
+                        finally:
+                            file_obj.close()
+
                     filename = "locked_files.zip.enc"
+                    
+                    # Save history (approximate size or just log it)
+                    if request.user.is_authenticated:
+                        file_names = ', '.join([f.name for f in uploaded_files])
+                        FileHistory.objects.create(
+                            user=request.user,
+                            action=action,
+                            filename=file_names[:255]
+                        )
+
+                    response = StreamingHttpResponse(
+                        stream_response(tmp_file, key_bytes, algo),
+                        content_type='application/octet-stream'
+                    )
+                    response['Content-Disposition'] = f'attachment; filename="{filename}"'
+                    return response
                     
                 else:
                     # Decrypt
@@ -67,15 +109,13 @@ def home(request):
                     # The result should be a zip file if it was encrypted by us
                     filename = "unlocked_files.zip"
                 
-                # Save to history only if user is authenticated
-                if request.user.is_authenticated:
-                    file_names = ', '.join([f.name for f in uploaded_files]) if action == 'encrypt' else uploaded_files[0].name
+                # Save to history only if user is authenticated (Moved up for encryption, keep here for decryption)
+                if request.user.is_authenticated and action == 'decrypt':
                     FileHistory.objects.create(
                         user=request.user,
                         action=action,
-                        filename=file_names[:255]  # Truncate if too long
+                        filename=uploaded_files[0].name[:255]
                     )
-
                 
                 response = HttpResponse(result, content_type='application/octet-stream')
                 response['Content-Disposition'] = f'attachment; filename="{filename}"'
@@ -92,6 +132,9 @@ def home(request):
 
 @login_required
 def change_username(request):
+    """
+    Handle username change requests.
+    """
     if request.method == 'POST':
         form = forms.UsernameChangeForm(request.POST, instance=request.user)
         if form.is_valid():
@@ -106,9 +149,15 @@ from django.contrib.auth.views import PasswordChangeView
 from django.urls import reverse_lazy
 
 class CustomPasswordChangeView(PasswordChangeView):
+    """
+    View for handling user password changes.
+    """
     template_name = 'locker_app/change_password.html'
     success_url = reverse_lazy('profile')
     
     def form_valid(self, form):
+        """
+        Handle valid form submission for password change.
+        """
         messages.success(self.request, 'Password updated successfully!')
         return super().form_valid(form)

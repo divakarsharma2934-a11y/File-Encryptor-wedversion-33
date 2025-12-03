@@ -28,20 +28,46 @@
 
             <!-- File Upload Zone -->
             <div class="form-group">
-                <label for="{{ form.file.id_for_label }}" class="file-upload-zone" id="dropZone">
+                <div class="file-upload-zone" id="dropZone">
                     <div class="upload-icon">
                         <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none"
                             stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
-                            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
                             <polyline points="17 8 12 3 7 8"></polyline>
                             <line x1="12" y1="3" x2="12" y2="15"></line>
                         </svg>
                     </div>
-                    <div class="upload-text">Click to upload or drag and drop</div>
-                    <div class="upload-hint">Supports multiple files</div>
+                    <div class="upload-text">Click to upload files or drag and drop</div>
+                    <div class="upload-hint">
+                        <a href="#" id="uploadFolderLink"
+                            style="color: var(--primary-color); text-decoration: none; border-bottom: 1px dashed var(--primary-color);">Click
+                            here to upload a folder</a>
+                    </div>
                     <div id="fileList" style="margin-top: 1rem; font-size: 0.9rem; color: var(--primary-color);"></div>
-                </label>
+                    <button type="button" id="clearFilesBtn"
+                        style="display: none; margin-top: 0.5rem; background: none; border: none; color: #ff4d4d; cursor: pointer; font-size: 0.85rem; text-decoration: underline;">Clear
+                        Selection</button>
+                </div>
                 {{ form.file }}
+                {{ form.folder }}
+                <style>
+                    #id_folder {
+                        display: none;
+                    }
+                </style>
+                <script>
+                    document.getElementById('dropZone').addEventListener('click', function (e) {
+                        if (e.target.id !== 'uploadFolderLink' && e.target.id !== 'clearFilesBtn') {
+                            document.getElementById('id_file').click();
+                        }
+                    });
+
+                    document.getElementById('uploadFolderLink').addEventListener('click', function (e) {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        document.getElementById('id_folder').click();
+                    });
+                </script>
                 {% if form.file.errors %}
                 <div class="alert alert-error" style="margin-top: 0.5rem;">{{ form.file.errors.0 }}</div>
                 {% endif %}
@@ -71,7 +97,23 @@
             <!-- Key Input -->
             <div class="form-group" style="margin-top: 1.5rem;">
                 <label for="{{ form.key.id_for_label }}" class="form-label">Secret Key</label>
-                {{ form.key }}
+                <div style="position: relative;">
+                    {{ form.key }}
+                    <span id="togglePassword"
+                        style="position: absolute; right: 12px; top: 50%; transform: translateY(-50%); cursor: pointer; color: var(--text-muted); padding: 4px; display: flex; align-items: center; justify-content: center;">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none"
+                            stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                            class="feather feather-eye">
+                            <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+                            <circle cx="12" cy="12" r="3"></circle>
+                        </svg>
+                    </span>
+                    <style>
+                        #id_key {
+                            padding-right: 40px !important;
+                        }
+                    </style>
+                </div>
                 <div style="font-size: 0.8rem; color: var(--text-muted); margin-top: 0.25rem;">Required for XOR
                     encryption</div>
                 {% if form.key.errors %}
@@ -110,14 +152,28 @@
 {% block extra_js %}
 <script>
     document.addEventListener('DOMContentLoaded', function () {
-        const fileInput = document.getElementById('{{ form.file.id_for_label }}');
+        const fileInput = document.getElementById('id_file');
+        const folderInput = document.getElementById('id_folder');
         const dropZone = document.getElementById('dropZone');
         const fileList = document.getElementById('fileList');
+        const clearFilesBtn = document.getElementById('clearFilesBtn');
+
+        function handleFiles(files) {
+            updateFileList(files);
+        }
 
         // Handle file selection
-        fileInput.addEventListener('change', function (e) {
-            updateFileList(this.files);
-        });
+        if (fileInput) {
+            fileInput.addEventListener('change', function (e) {
+                handleFiles(this.files);
+            });
+        }
+
+        if (folderInput) {
+            folderInput.addEventListener('change', function (e) {
+                handleFiles(this.files);
+            });
+        }
 
         // Drag and drop effects
         ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
@@ -148,19 +204,60 @@
         dropZone.addEventListener('drop', function (e) {
             const dt = e.dataTransfer;
             const files = dt.files;
-            fileInput.files = files;
-            updateFileList(files);
+
+            // For drag and drop, we'll use the file input
+            if (fileInput) {
+                fileInput.files = files;
+                handleFiles(files);
+            }
         });
 
         function updateFileList(files) {
             if (files.length > 0) {
-                const names = Array.from(files).map(f => f.name).join(', ');
+                // Show first few files
+                const maxDisplay = 3;
+                let names = Array.from(files).slice(0, maxDisplay).map(f => f.name).join(', ');
+                if (files.length > maxDisplay) {
+                    names += `, and ${files.length - maxDisplay} more`;
+                }
+
                 fileList.textContent = `Selected: ${names}`;
-                document.querySelector('.upload-text').textContent = `${files.length} file(s) selected`;
+                document.querySelector('.upload-text').textContent = `${files.length} item(s) selected`;
+                if (clearFilesBtn) clearFilesBtn.style.display = 'inline-block';
             } else {
                 fileList.textContent = '';
-                document.querySelector('.upload-text').textContent = 'Click to upload or drag and drop';
+                document.querySelector('.upload-text').textContent = 'Click to upload files or drag and drop';
+                if (clearFilesBtn) clearFilesBtn.style.display = 'none';
             }
+        }
+
+        if (clearFilesBtn) {
+            clearFilesBtn.addEventListener('click', function (e) {
+                e.preventDefault();
+                e.stopPropagation();
+                if (fileInput) fileInput.value = '';
+                if (folderInput) folderInput.value = '';
+                updateFileList([]);
+            });
+        }
+
+        // Password visibility toggle
+        const togglePassword = document.getElementById('togglePassword');
+        const passwordInput = document.getElementById('id_key');
+
+        if (togglePassword && passwordInput) {
+            togglePassword.addEventListener('click', function (e) {
+                // toggle the type attribute
+                const type = passwordInput.getAttribute('type') === 'password' ? 'text' : 'password';
+                passwordInput.setAttribute('type', type);
+
+                // toggle the eye icon
+                if (type === 'text') {
+                    this.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-eye-off"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"></path><line x1="1" y1="1" x2="23" y2="23"></line></svg>`;
+                } else {
+                    this.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-eye"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>`;
+                }
+            });
         }
     });
 </script>

@@ -9,6 +9,8 @@ import base64
 import sys
 import os
 from datetime import datetime
+from itertools import cycle
+import codecs
 
 
 def log(message):
@@ -53,13 +55,14 @@ def xor_encrypt(data, key):
     if len(key) == 0:
         raise ValueError("Key cannot be empty")
 
-    result = bytearray()
-    key_len = len(key)
-
-    for i, byte in enumerate(data):
-        result.append(byte ^ key[i % key_len])
-
-    return bytes(result)
+    # Optimization: Use list comprehension or generator which is slightly faster than loop with append
+    # But for large data, we should ideally use a C extension or numpy. 
+    # Since we are sticking to stdlib, we can try to process in chunks if we change the architecture,
+    # but for now let's just make the loop faster.
+    
+    # Using itertools.cycle is cleaner and often faster
+    from itertools import cycle
+    return bytes(b ^ k for b, k in zip(data, cycle(key)))
 
 
 def xor_decrypt(data, key):
@@ -68,6 +71,9 @@ def xor_decrypt(data, key):
 
 
 def b64_encrypt(data):
+    """
+    Encode data using Base64.
+    """
     try:
         return base64.b64encode(data)
     except Exception as e:
@@ -75,6 +81,9 @@ def b64_encrypt(data):
 
 
 def b64_decrypt(data):
+    """
+    Decode Base64 encoded data.
+    """
     try:
         return base64.b64decode(data)
     except Exception as e:
@@ -92,6 +101,10 @@ def get_key_hash(key):
 
 
 def encrypt_data(data, key, algo):
+    """
+    Encrypt data using the specified algorithm and key.
+    Adds a signature to the data for verification during decryption.
+    """
     # Hash the key to prevent "1111" == "11" issues
     hashed_key = get_key_hash(key)
     
@@ -109,7 +122,55 @@ def encrypt_data(data, key, algo):
         raise ValueError(f"Invalid algorithm: {algo}")
 
 
+# Streaming Support
+
+def chunked_reader(f, chunk_size=8190):
+    """Yield chunks from a file-like object."""
+    while True:
+        data = f.read(chunk_size)
+        if not data:
+            break
+        yield data
+
+def xor_generator(iterator, key):
+    """Yield XOR encrypted chunks from input iterator."""
+    keystream = cycle(key)
+    for chunk in iterator:
+        yield bytes(b ^ k for b, k in zip(chunk, keystream))
+
+def b64_encode_generator(iterator):
+    """Yield Base64 encoded chunks from input iterator."""
+    encoder = codecs.getincrementalencoder("base64")()
+    for chunk in iterator:
+        yield encoder.encode(chunk, final=False)
+    yield encoder.encode(b"", final=True)
+
+def encrypt_stream(file_obj, key, algo):
+    """
+    Stream encryption from a file object.
+    Returns a generator yielding encrypted bytes.
+    """
+    hashed_key = get_key_hash(key)
+    
+    def source_stream():
+        yield SIGNATURE
+        yield from chunked_reader(file_obj)
+    
+    if algo == "xor":
+        yield from xor_generator(source_stream(), hashed_key)
+    elif algo == "base64":
+        yield from b64_encode_generator(source_stream())
+    elif algo == "xor+base64":
+        yield from b64_encode_generator(xor_generator(source_stream(), hashed_key))
+    else:
+        raise ValueError(f"Invalid algorithm: {algo}")
+
+
 def decrypt_data(data, key, algo):
+    """
+    Decrypt data using the specified algorithm and key.
+    Verifies the signature to ensure data integrity and correct key usage.
+    """
     hashed_key = get_key_hash(key)
     
     decrypted = None
@@ -159,6 +220,10 @@ def validate_args(args):
 
 
 def main():
+    """
+    Main entry point for the command-line interface.
+    Parses arguments and executes the requested encryption/decryption operation.
+    """
     parser = argparse.ArgumentParser(
         description="File Encryption & Decryption Utility"
     )

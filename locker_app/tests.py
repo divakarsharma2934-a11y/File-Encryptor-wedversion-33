@@ -4,7 +4,13 @@ from django.urls import reverse
 from django.core.files.uploadedfile import SimpleUploadedFile
 
 class FileUploadTest(TestCase):
+    """
+    Test case for verifying file upload functionality.
+    """
     def test_upload_file(self):
+        """
+        Test the file upload and encryption process.
+        """
         client = Client()
         # Create a dummy file
         file_content = b"test content"
