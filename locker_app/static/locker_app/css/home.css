@@ -8,7 +8,7 @@
     font-size: 2.5rem;
     font-weight: 800;
     margin-bottom: 1rem;
-    background: linear-gradient(to right, #fff, #94a3b8);
+    background: var(--hero-gradient);
     -webkit-background-clip: text;
     background-clip: text;
     -webkit-text-fill-color: transparent;
@@ -41,7 +41,7 @@
     text-align: center;
     transition: all 0.2s;
     cursor: pointer;
-    background: rgba(15, 23, 42, 0.3);
+    background: var(--upload-zone-bg);
 }
 
 .file-upload-zone:hover,
@@ -98,7 +98,7 @@ input[type="password"],
 input[type="email"] {
     width: 100%;
     padding: 0.75rem 1rem;
-    background: rgba(15, 23, 42, 0.6);
+    background: var(--input-bg);
     border: 1px solid var(--border-color);
     border-radius: 0.5rem;
     color: var(--text-color);
@@ -134,7 +134,7 @@ input[type="email"]:focus {
 .radio-group {
     display: flex;
     gap: 1rem;
-    background: rgba(15, 23, 42, 0.6);
+    background: var(--input-bg);
     padding: 0.5rem;
     border-radius: 0.5rem;
     border: 1px solid var(--border-color);
@@ -176,5 +176,65 @@ input[type="email"]:focus {
     padding: 1rem;
     font-size: 1.1rem;
     font-weight: 600;
+    font-weight: 600;
     letter-spacing: 0.02em;
+}
+
+/* Processing Overlay */
+.processing-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(15, 23, 42, 0.9);
+    backdrop-filter: blur(5px);
+    z-index: 2000;
+    display: none;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    opacity: 0;
+    transition: opacity 0.3s;
+}
+
+.processing-overlay.active {
+    opacity: 1;
+}
+
+.progress-container {
+    width: 90%;
+    max-width: 400px;
+    text-align: center;
+}
+
+.progress-bar-bg {
+    width: 100%;
+    height: 6px;
+    background: var(--surface-color);
+    border-radius: 999px;
+    overflow: hidden;
+    margin: 1.5rem 0 0.5rem;
+    position: relative;
+    border: 1px solid var(--border-color);
+}
+
+.progress-bar-fill {
+    height: 100%;
+    background: var(--primary-color);
+    width: 0%;
+    transition: width 0.1s linear;
+    border-radius: 999px;
+}
+
+.progress-status {
+    color: var(--text-color);
+    font-size: 1.1rem;
+    font-weight: 600;
+    margin-bottom: 0.5rem;
+}
+
+.progress-detail {
+    color: var(--text-muted);
+    font-size: 0.9rem;
 }

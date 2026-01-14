@@ -6,7 +6,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{% block title %}File Locker{% endblock %}</title>
-    <link rel="stylesheet" href="{% static 'locker_app/css/main.css' %}">
+    <link rel="stylesheet" href="{% static 'locker_app/css/main.css' %}?v=1">
     {% block extra_css %}{% endblock %}
 </head>
 
@@ -34,9 +34,36 @@
                 <a href="{% url 'login' %}" class="nav-link">Login</a>
                 <a href="{% url 'signup' %}" class="btn btn-primary">Sign Up</a>
                 {% endif %}
+                <button class="theme-toggle" id="theme-toggle" title="Toggle Theme">
+                    <!-- Sun Icon -->
+                    <svg class="sun-icon" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24"
+                        fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                        stroke-linejoin="round" style="display: none;">
+                        <circle cx="12" cy="12" r="5"></circle>
+                        <line x1="12" y1="1" x2="12" y2="3"></line>
+                        <line x1="12" y1="21" x2="12" y2="23"></line>
+                        <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+                        <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+                        <line x1="1" y1="12" x2="3" y2="12"></line>
+                        <line x1="21" y1="12" x2="23" y2="12"></line>
+                        <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+                        <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+                    </svg>
+                    <!-- Moon Icon -->
+                    <svg class="moon-icon" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24"
+                        fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                        stroke-linejoin="round">
+                        <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
+                    </svg>
+                </button>
             </div>
         </div>
     </nav>
+
+    <!-- Global Loader -->
+    <div id="global-loader" class="global-loader">
+        <div id="global-progress-bar" class="global-progress-bar"></div>
+    </div>
 
     <div class="messages">
         {% if messages %}
@@ -62,6 +89,48 @@
     {% block extra_js %}{% endblock %}
     <script>
         document.addEventListener('DOMContentLoaded', function () {
+            // Theme Toggle Logic
+            const themeToggle = document.getElementById('theme-toggle');
+            const body = document.body;
+            const sunIcon = document.querySelector('.sun-icon');
+            const moonIcon = document.querySelector('.moon-icon');
+
+            // Check saved preference
+            const savedTheme = localStorage.getItem('theme');
+            if (savedTheme === 'light') {
+                body.classList.add('light-mode');
+                sunIcon.style.display = 'none';
+                moonIcon.style.display = 'block'; // Wait, logic check: Light mode means we want to go to Dark, so show Moon? 
+                // Actually usually: Light Mode = Sun is active (representing day) or Moon to switch to night?
+                // Standard: Show the icon of the *other* mode. 
+                // If Light Mode is active, show Moon (to switch to Dark).
+                // If Dark Mode is active, show Sun (to switch to Light).
+
+                // My Default is Dark. 
+                // So if Light Mode (class added):
+                sunIcon.style.display = 'none';
+                moonIcon.style.display = 'block';
+            } else {
+                // Default Dark
+                sunIcon.style.display = 'block';
+                moonIcon.style.display = 'none';
+            }
+
+            themeToggle.addEventListener('click', function () {
+                body.classList.toggle('light-mode');
+                const isLight = body.classList.contains('light-mode');
+
+                if (isLight) {
+                    localStorage.setItem('theme', 'light');
+                    sunIcon.style.display = 'none';
+                    moonIcon.style.display = 'block';
+                } else {
+                    localStorage.setItem('theme', 'dark');
+                    sunIcon.style.display = 'block';
+                    moonIcon.style.display = 'none';
+                }
+            });
+
             setTimeout(function () {
                 const alerts = document.querySelectorAll('.alert');
                 alerts.forEach(function (alert) {
