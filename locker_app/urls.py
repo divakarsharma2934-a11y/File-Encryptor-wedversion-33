@@ -10,4 +10,5 @@ urlpatterns = [
     path('logout/', auth_views.LogoutView.as_view(), name='logout'),
     path('change-username/', views.change_username, name='change_username'),
     path('change-password/', views.CustomPasswordChangeView.as_view(), name='change_password'),
+    path('google-login/', views.google_login, name='google_login'),
 ]

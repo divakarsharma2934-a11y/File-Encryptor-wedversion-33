@@ -11,6 +11,70 @@ import os
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.forms import UserCreationForm
 from django.contrib import messages
+import json
+import requests
+from django.http import JsonResponse
+from django.views.decorators.csrf import csrf_exempt
+from django.contrib.auth import login
+from django.contrib.auth.models import User
+
+@csrf_exempt
+def google_login(request):
+    if request.method == 'POST':
+        try:
+            data = json.loads(request.body)
+            id_token = data.get('id_token')
+            
+            # Verify token with Firebase Identity Toolkit
+            # This is required because Firebase ID tokens are not checking against standard Google OAuth2 endpoints
+            api_key = "AIzaSyAd_a-I9U014ArpshXVAaSDL8hRHG4a4_k"
+            verify_url = f"https://identitytoolkit.googleapis.com/v1/accounts:lookup?key={api_key}"
+            
+            response = requests.post(verify_url, json={'idToken': id_token})
+            
+            if response.status_code != 200:
+                print(f"Token verification failed: {response.text}") # Debug
+                error_detail = response.json().get('error', {}).get('message', response.text)
+                return JsonResponse({'success': False, 'error': f"Firebase rejected token: {error_detail}"})
+                
+            firebase_data = response.json()
+            users = firebase_data.get('users', [])
+            if not users:
+                 return JsonResponse({'success': False, 'error': 'No user found in token'})
+            
+            email = users[0].get('email')
+            
+            if not email:
+                 return JsonResponse({'success': False, 'error': 'No email found'})
+            
+            # Get or create user
+            is_new_user = False
+            try:
+                user = User.objects.get(email=email)
+            except User.DoesNotExist:
+                # Create new user
+                is_new_user = True
+                username = email.split('@')[0]
+                # Ensure unique username
+                base_username = username
+                counter = 1
+                while User.objects.filter(username=username).exists():
+                    username = f"{base_username}{counter}"
+                    counter += 1
+                    
+                user = User.objects.create_user(username=username, email=email)
+                user.save()
+            
+            # Login user
+            login(request, user, backend='django.contrib.auth.backends.ModelBackend')
+            return JsonResponse({'success': True, 'is_new_user': is_new_user})
+            
+        except Exception as e:
+            print(f"Login exception: {str(e)}") # Debug
+            return JsonResponse({'success': False, 'error': str(e)})
+            
+    # If GET request or other method, redirect to login
+    return redirect('login')
 
 def signup(request):
     """
