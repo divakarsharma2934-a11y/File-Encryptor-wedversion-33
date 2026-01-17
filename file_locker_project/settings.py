@@ -31,11 +31,12 @@ DEBUG = os.environ.get('DJANGO_DEBUG', 'True') == 'True'
 # Allow popups for Google Auth
 SECURE_CROSS_ORIGIN_OPENER_POLICY = 'same-origin-allow-popups'
 
-ALLOWED_HOSTS = ['*']
+ALLOWED_HOSTS = ['*', '.vercel.app']
 
 CSRF_TRUSTED_ORIGINS = [
     'https://*.railway.app',
     'https://*.up.railway.app',
+    'https://*.vercel.app',
 ]
 
 
